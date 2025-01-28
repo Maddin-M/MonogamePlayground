@@ -34,7 +34,7 @@ namespace ArchCameraTest
             _camera.LookAt(Vector2.Zero);
             _world = World.Create();
             updateSystems = [new CameraSystem(_world, _camera), new PlayerInputSystem(_world)];
-            drawSystems = [new RenderSystem(_world)];
+            drawSystems = [new RenderSystem(_world, _spriteBatch, _camera)];
             base.Initialize();
         }
 
@@ -71,15 +71,10 @@ namespace ArchCameraTest
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            _spriteBatch.Begin(
-                transformMatrix: _camera.GetViewMatrix(),
-                samplerState: SamplerState.PointClamp
-            );
             foreach (var system in drawSystems)
             {
-                system.Draw(gameTime, _spriteBatch);
+                system.Draw(gameTime);
             }
-            _spriteBatch.End();
             base.Draw(gameTime);
         }
     }
@@ -91,7 +86,7 @@ namespace ArchCameraTest
 
     internal interface IDrawSystem
     {
-        abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
+        abstract void Draw(GameTime gameTime);
     }
 
     internal interface IUpdateSystem
@@ -131,14 +126,19 @@ namespace ArchCameraTest
         }
     }
 
-    internal class RenderSystem(World world) : ArchSystem(world, new QueryDescription().WithAll<PositionComponent, TextureComponent>()), IDrawSystem
+    internal class RenderSystem(World world, SpriteBatch spriteBatch, OrthographicCamera camera) : ArchSystem(world, new QueryDescription().WithAll<PositionComponent, TextureComponent>()), IDrawSystem
     {
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public void Draw(GameTime gameTime)
         {
+            spriteBatch.Begin(
+                transformMatrix: camera.GetViewMatrix(),
+                samplerState: SamplerState.PointClamp
+            );
             world.Query(in query, (ref PositionComponent pos, ref TextureComponent texture) =>
             {
                 spriteBatch.Draw(texture.Texture, pos.Vec2, Color.White);
             });
+            spriteBatch.End();
         }
     }
 
@@ -153,10 +153,7 @@ namespace ArchCameraTest
         }
     }
 
-    internal record ControlComponent
-    {
-        public HashSet<Keys> MovementKeysPressed { get; set; } = [];
-    }
+    internal record ControlComponent();
 
     internal record TextureComponent
     {

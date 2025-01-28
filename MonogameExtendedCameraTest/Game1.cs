@@ -158,10 +158,7 @@ namespace MonogameExtendedCameraTest
         }
     }
 
-    internal record ControlComponent
-    {
-        public HashSet<Keys> MovementKeysPressed { get; set; } = [];
-    }
+    internal record ControlComponent();
 
     internal record TextureComponent
     {
